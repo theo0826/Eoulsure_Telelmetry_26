@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KSAE TEAM TELEMETRY v5.3</title>
+    <title>KSAE TEAM TELEMETRY v5.4</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -205,6 +205,14 @@
         </div>
 
         <div class="data-group">
+            <div class="group-title">MC Status</div>
+            <div class="data-row">
+                <span class="data-label">Fault Code</span> 
+                <div><span id="val-mc-fault" class="data-val" style="color:var(--accent-green)">OK</span></div>
+            </div>
+        </div>
+
+        <div class="data-group">
             <div class="group-title">HV System</div>
             <div class="data-row"><span class="data-label">Volt</span> <div><span id="val-hv-volt" class="data-val" style="color:var(--accent-red)">0.0</span><span class="unit">V</span></div></div>
             <div class="data-row"><span class="data-label">Curr</span> <div><span id="val-hv-curr" class="data-val" style="color:var(--accent-yellow)">0.0</span><span class="unit">A</span></div></div>
@@ -315,20 +323,18 @@
         const db = getDatabase(app);
 
         // --- [핵심] LV 배터리 (리튬인산철 4S) 전용 변환 함수 ---
-        // 13.3V 이상 = 100%, 12.0V 이하 = 0%로 매핑
-        // 비선형 구간을 고려하여 13.0V~13.2V 구간을 세분화
         function getLiFePO4Percentage(voltage) {
             if (!voltage || voltage < 10.0) return 0; 
 
             if (voltage >= 13.4) return 100;
-            if (voltage >= 13.3) return 90; // 완충 후 안정화
-            if (voltage >= 13.2) return 70; // 사용 중 
-            if (voltage >= 13.1) return 40; // 급격한 전압 강하 구간 시작
+            if (voltage >= 13.3) return 90; 
+            if (voltage >= 13.2) return 70; 
+            if (voltage >= 13.1) return 40; 
             if (voltage >= 13.0) return 30;
             if (voltage >= 12.9) return 20;
-            if (voltage >= 12.8) return 15; // 공칭 전압 하한
+            if (voltage >= 12.8) return 15; 
             if (voltage >= 12.5) return 10;
-            if (voltage >= 12.0) return 5;  // 방전 임박
+            if (voltage >= 12.0) return 5;  
             return 0;
         }
 
@@ -340,12 +346,7 @@
             text.innerText = percent + "%";
             bar.style.width = percent + "%";
             
-            // 색상 변경: 20% 이하 빨강, 그 외엔 원래 색상 유지(CSS 기본색 or inline style)
-            // 여기서는 심플하게 위험시에만 빨강으로 변경하고 나머지는 기본 색상 유지
             if(percent <= 20) bar.style.backgroundColor = "var(--accent-red)";
-            // (참고: 위쪽 HTML에서 인라인 스타일로 기본색을 지정해뒀으므로, 
-            // 20% 초과일 때 다시 원래 색으로 돌리려면 별도 로직이 필요하지만, 
-            // 보통 배터리는 줄어들기만 하므로 새로고침 전까진 괜찮습니다.)
         }
 
         // --- 차트 생성 (Chart.js) ---
@@ -400,11 +401,24 @@
                 updateText('val-acc-x', fmt(data.acc_x, 2));
                 updateText('val-acc-y', fmt(data.acc_y, 2));
 
+                // 🔥 MC Fault Code 로직 추가 🔥
+                const mcFault = data.mc_fault || 0;
+                const faultEl = document.getElementById('val-mc-fault');
+                if (faultEl) {
+                    if (mcFault === 0) {
+                        faultEl.innerText = "OK";
+                        faultEl.style.color = "var(--accent-green)";
+                    } else {
+                        faultEl.innerText = "ERR: " + mcFault;
+                        faultEl.style.color = "var(--accent-red)";
+                    }
+                }
+
                 // 2. [게이지] HV: Raw값 / LV: 계산된 값
-                updateGauge('soc-hv-bar', 'soc-hv-text', data.hv_soc || 0); // HV는 그대로
+                updateGauge('soc-hv-bar', 'soc-hv-text', data.hv_soc || 0); 
                 
-                const lv1_pct = getLiFePO4Percentage(data.lv_volt1); // LV는 계산
-                const lv2_pct = getLiFePO4Percentage(data.lv_volt2); // LV는 계산
+                const lv1_pct = getLiFePO4Percentage(data.lv_volt1); 
+                const lv2_pct = getLiFePO4Percentage(data.lv_volt2); 
                 updateGauge('soc-lv1-bar', 'soc-lv1-text', lv1_pct);
                 updateGauge('soc-lv2-bar', 'soc-lv2-text', lv2_pct);
 
