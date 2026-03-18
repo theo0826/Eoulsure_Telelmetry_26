@@ -492,28 +492,36 @@
             return new Chart(document.getElementById(id), {
                 type: 'line',
                 data: { labels: [], datasets: labels.map((l, i) => ({
-                    label: l, data: [], borderColor: colors[i], borderWidth: 2.5, tension: 0.4, pointRadius: 0,
+                    // ★ 1. 꼼수: 라벨 이름 앞에 강제로 공백(&nbsp; 역할)을 넣어서 동그라미와 무조건 띄워버림
+                    label: '  ' + l, 
+                    data: [], borderColor: colors[i], borderWidth: 2.5, tension: 0.4, pointRadius: 0,
                     yAxisID: (dualAxis && i===1) ? 'y1' : 'y',
                     fill: false
                 }))},
                 options: {
                     responsive: true, maintainAspectRatio: false, animation: false,
                     interaction: { mode: 'index', intersect: false },
+                    layout: {
+                        // ★ 2. 차트 전체 위쪽 여백을 조금 줘서 숨통을 트임
+                        padding: { top: 5 }
+                    },
                     scales: {
                         x: { display: false },
-                        y: { position: 'left', grid: { color: 'rgba(255, 255, 255, 0.04)'}, ticks: { color: '#7a7a85' } },
-                        y1: { display: dualAxis, position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#7a7a85' } }
+                        y: { position: 'left', grid: { color: 'rgba(255, 255, 255, 0.04)'}, ticks: { color: '#7a7a85', padding: 10 } },
+                        y1: { display: dualAxis, position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#7a7a85', padding: 10 } }
                     },
                     plugins: { 
                         legend: { 
                             display: true, 
                             position: 'top',
                             align: 'end',
+                            // ★ 3. 범례와 아래 그래프 선 사이의 간격을 확실하게 벌림
+                            padding: { bottom: 20 },
                             labels: { 
                                 usePointStyle: true, 
-                                boxWidth: 8,
-                                padding: 20, // ★ 범례 아이템 간 간격
-                                boxPadding: 8 // ★ 동그라미와 글자 간격 (최신 Chart.js 지원)
+                                pointStyle: 'circle', // 확실한 원형
+                                boxWidth: 7,          // 동그라미 크기
+                                padding: 25           // 각 범례 덩어리(Speed, RPM 등) 사이의 가로 간격
                             } 
                         } 
                     }
