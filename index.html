@@ -493,7 +493,7 @@
                 type: 'line',
                 data: { labels: [], datasets: labels.map((l, i) => ({
                     // ★ 1. 꼼수: 라벨 이름 앞에 강제로 공백(&nbsp; 역할)을 넣어서 동그라미와 무조건 띄워버림
-                    label: '  ' + l, 
+                    label: '     ' + l, 
                     data: [], borderColor: colors[i], borderWidth: 2.5, tension: 0.4, pointRadius: 0,
                     yAxisID: (dualAxis && i===1) ? 'y1' : 'y',
                     fill: false
