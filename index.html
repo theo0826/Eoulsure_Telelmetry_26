@@ -3,29 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> EOULSURE TELEMETRY v5.6 - HIGH VISIBILITY</title>
+    <title>EOULSURE TELEMETRY v5.6 - SECURE</title>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&display=swap" rel="stylesheet">
+
     <style>
         :root {
-            /* 깊이감 있는 다크 테마 */
-            --bg-color: #0c0d10;        
-            --panel-bg: #14161b;        
-            --sidebar-bg: #101115;      
-            
-            /* 가시성을 고려한 텍스트 컬러 */
+            --bg-color: #0c0d10;
+            --panel-bg: #14161b;
+            --sidebar-bg: #101115;
+
             --text-main: #f5f5f7;
             --text-dim: #9090a0;
-            
-            /* Tesla/모던 EV 포인트 컬러 */
-            --accent-green: #2ecc71;   
-            --accent-red: #e74c3c;     
-            --accent-blue: #3498db;    
+
+            --accent-green: #2ecc71;
+            --accent-red: #e74c3c;
+            --accent-blue: #3498db;
             --accent-orange: #f39c12;
             --accent-yellow: #f1c40f;
             --accent-purple: #9b59b6;
 
-            /* 경계 및 깊이감 정의 */
             --border-primary: 1px solid rgba(255, 255, 255, 0.08);
             --border-highlight: 1px solid rgba(255, 255, 255, 0.15);
             --shadow-panel: 0 8px 32px rgba(0, 0, 0, 0.4);
@@ -43,7 +41,6 @@
             letter-spacing: -0.4px;
         }
 
-        /* 1. 사이드바 (가시성 및 간격 개선) */
         aside {
             width: 300px;
             background-color: var(--sidebar-bg);
@@ -67,17 +64,23 @@
             border-bottom: 1px solid rgba(255,255,255,0.06);
             text-align: center;
         }
-        .brand span { color: var(--accent-blue); }
 
-        .data-group { 
-            margin-bottom: 30px; 
+        .brand span {
+            color: var(--accent-blue);
+        }
+
+        .data-group {
+            margin-bottom: 30px;
             background: rgba(255,255,255,0.02);
             padding: 20px;
             border-radius: 12px;
             border: var(--border-primary);
             box-shadow: var(--shadow-subtle);
         }
-        .data-group:last-of-type { margin-bottom: 20px; }
+
+        .data-group:last-of-type {
+            margin-bottom: 20px;
+        }
 
         .group-title {
             font-size: 0.75rem;
@@ -91,19 +94,36 @@
         }
 
         .data-row {
-            display: flex; 
-            justify-content: space-between; 
+            display: flex;
+            justify-content: space-between;
             align-items: baseline;
-            padding: 10px 0; 
+            padding: 10px 0;
             border-bottom: 1px solid rgba(255,255,255,0.03);
         }
-        .data-row:last-child { border-bottom: none; }
-        
-        .data-label { font-size: 0.9rem; color: #a0a0ab; font-weight: 400; }
-        .data-val { font-size: 1.2rem; font-weight: 700; color: #ffffff; }
-        .unit { font-size: 0.75rem; color: var(--text-dim); margin-left: 5px; font-weight: 400; }
 
-        /* 2. 메인 컨텐츠 */
+        .data-row:last-child {
+            border-bottom: none;
+        }
+
+        .data-label {
+            font-size: 0.9rem;
+            color: #a0a0ab;
+            font-weight: 400;
+        }
+
+        .data-val {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .unit {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            margin-left: 5px;
+            font-weight: 400;
+        }
+
         main {
             flex: 1;
             display: flex;
@@ -114,7 +134,6 @@
             background-image: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 100%);
         }
 
-        /* --- 배터리 게이지 섹션 (가시성 높은 가로 바 스타일) --- */
         .gauge-container {
             display: flex;
             gap: 25px;
@@ -139,10 +158,21 @@
             text-align: center;
             width: 100%;
         }
-        .batt-label { font-size: 0.8rem; color: var(--text-dim); display: block; margin-bottom: 6px; font-weight: 700; letter-spacing: 1px;}
-        .batt-percent { font-size: 1.8rem; font-weight: 700; }
 
-        /* 미니멀하지만 가시성 높은 배터리 바 */
+        .batt-label {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .batt-percent {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
         .battery-icon {
             width: 100%;
             max-width: 160px;
@@ -153,15 +183,15 @@
             overflow: hidden;
             border: 1px solid rgba(255, 255, 255, 0.03);
         }
+
         .battery-level {
             height: 100%;
-            width: 0%; 
+            width: 0%;
             border-radius: 12px;
             transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.5s ease;
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
         }
 
-        /* 차트 그리드 */
         .charts-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
@@ -180,45 +210,116 @@
             box-shadow: var(--shadow-panel);
             transition: border-color 0.3s ease;
         }
+
         .chart-card:hover {
             border-color: rgba(255, 255, 255, 0.25);
         }
 
-        .chart-title { 
-            font-size: 0.85rem; 
-            color: var(--text-dim); 
-            margin-bottom: 20px; 
-            font-weight: 700; 
+        .chart-title {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            margin-bottom: 20px;
+            font-weight: 700;
             letter-spacing: 0.8px;
             text-transform: uppercase;
             border-bottom: 1px solid rgba(255,255,255,0.04);
             padding-bottom: 10px;
         }
-        .canvas-container { flex: 1; position: relative; width: 100%; overflow: hidden; }
 
-        #status-badge { 
-            padding: 8px 16px; 
-            border-radius: 24px; 
-            font-size: 0.8rem; 
+        .canvas-container {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        #status-badge {
+            padding: 8px 16px;
+            border-radius: 24px;
+            font-size: 0.8rem;
             background: rgba(255,255,255,0.03);
-            color: var(--text-dim); 
+            color: var(--text-dim);
             font-weight: 700;
             display: inline-block;
             border: var(--border-primary);
         }
-        #status-badge.live { 
-            background: rgba(46, 204, 113, 0.1); 
-            color: var(--accent-green); 
+
+        #status-badge.live {
+            background: rgba(46, 204, 113, 0.1);
+            color: var(--accent-green);
             border-color: rgba(46, 204, 113, 0.2);
         }
 
+        .login-box input {
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            font-family: 'JetBrains Mono', sans-serif;
+            outline: none;
+        }
+
+        .login-box input:focus {
+            border-color: rgba(52, 152, 219, 0.55);
+        }
+
+        .login-box button {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: none;
+            background: var(--accent-blue);
+            color: white;
+            font-family: 'JetBrains Mono', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .login-box button:hover {
+            filter: brightness(1.12);
+        }
+
+        .login-box button.secondary {
+            margin-top: 8px;
+            background: rgba(255,255,255,0.08);
+            color: var(--text-main);
+        }
+
+        #login-message {
+            min-height: 18px;
+            margin-top: 10px;
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            line-height: 1.35;
+        }
+
+        #login-message.error {
+            color: var(--accent-red);
+        }
+
+        #login-message.ok {
+            color: var(--accent-green);
+        }
     </style>
 </head>
-<body>
 
+<body>
     <aside>
-        <div class="brand">EOULSURE26 <span>TELEMTRY </span></div>
-        
+        <div class="brand">EOULSURE26 <span>TELEMETRY</span></div>
+
+        <div class="data-group login-box" id="login-box">
+            <div class="group-title">Firebase Login</div>
+            <input id="login-email" type="email" autocomplete="username" placeholder="viewer email">
+            <input id="login-password" type="password" autocomplete="current-password" placeholder="viewer password">
+            <button id="login-btn" type="button">LOGIN</button>
+            <button id="logout-btn" class="secondary" type="button" style="display:none;">LOGOUT</button>
+            <div id="login-message">로그인 후 텔레메트리를 읽습니다.</div>
+        </div>
+
         <div class="data-group">
             <div class="group-title">Dynamics</div>
             <div class="data-row"><span class="data-label">Speed</span> <div><span id="val-speed" class="data-val">0</span><span class="unit">km/h</span></div></div>
@@ -229,7 +330,7 @@
         <div class="data-group">
             <div class="group-title">MC Status</div>
             <div class="data-row">
-                <span class="data-label">Fault Code</span> 
+                <span class="data-label">Fault Code</span>
                 <div style="text-align: right;"><span id="val-mc-fault" class="data-val" style="color:var(--accent-green)">OK</span></div>
             </div>
         </div>
@@ -254,7 +355,7 @@
         </div>
 
         <div style="margin-top:auto; font-size:0.8rem; color:#555; text-align: center;">
-            <span id="status-badge">OFFLINE</span>
+            <span id="status-badge">LOGIN REQUIRED</span>
         </div>
     </aside>
 
@@ -296,7 +397,7 @@
                 <div class="chart-title">DRIVING DYNAMICS</div>
                 <div class="canvas-container"><canvas id="chart-drive"></canvas></div>
             </div>
-            
+
             <div class="chart-card">
                 <div class="chart-title">LV BATTERY VOLTAGE</div>
                 <div class="canvas-container"><canvas id="chart-lv"></canvas></div>
@@ -322,17 +423,18 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // [★설정] 본인의 Firebase 설정값 넣기
         const firebaseConfig = {
             apiKey: "AIzaSyDFstdl0Ai_WsYiwxFTFKo4UeM9-IzhSCA",
             authDomain: "eoulsure-26.firebaseapp.com",
             databaseURL: "https://eoulsure-26-default-rtdb.firebaseio.com",
-            projectId: "eoulsure-26",
+            projectId: "eoulsure-26"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        const auth = getAuth(app);
 
         const mcFaultMap = {
             0x4441: "Motor Characterisation Mode",
@@ -383,8 +485,8 @@
             0x5186: "Analog Output Over Temperature",
             0x5187: "Analog Output Under Current",
             0x5188: "Analog Output Short Circuit",
-            0x45C1: "BDI (battery discharge) warning",
-            0x45C2: "BDI (battery discharge) cutout",
+            0x45C1: "BDI warning",
+            0x45C2: "BDI cutout",
             0x45C3: "Low Battery cutout",
             0x45C4: "High Battery cutout",
             0x45C5: "High Capacitor cutout",
@@ -393,27 +495,27 @@
             0x45C8: "Vcap above rated max",
             0x45C9: "Vcap cutback for motoring torque",
             0x45CA: "Vcap cutback for regen torque",
-            0x45CE: "Vcap to Vkey (Vbat) difference",
-            0x4DC3: "Power Supply (keyswitch) Critical",
+            0x45CE: "Vcap to Vkey difference",
+            0x4DC3: "Power Supply Critical",
             0x51C2: "Capacitor Precharge Failure",
             0x4601: "Device too cold",
             0x4602: "Device too hot",
             0x4603: "Motor in thermal cutback",
             0x4604: "Motor too cold",
-            0x5201: "Heatsink / device overtemp",
+            0x5201: "Heatsink/device overtemp",
             0x4681: "Unit in pre-operational",
             0x4682: "IO can't initialise",
-            0x4683: "RPDO Timeout (warning)",
-            0x4A81: "RPDO Timeout (drive inhibit)",
-            0x4E81: "RPDO Timeout (severe)",
+            0x4683: "RPDO Timeout warning",
+            0x4A81: "RPDO Timeout drive inhibit",
+            0x4E81: "RPDO Timeout severe",
             0x46C2: "SinCos Tracking Warning",
             0x46C3: "Fault Ride Through",
-            0x46C6: "Encoder PLL Deactivated (warning)",
+            0x46C6: "Encoder PLL Deactivated",
             0x52C1: "Encoder Fault",
             0x52C2: "Motor Overcurrent Fault",
             0x52C3: "Current Control Fault",
             0x52C4: "Motor Overspeed Fault",
-            0x4B01: "CAN bus-off (drive inhibit)",
+            0x4B01: "CAN bus-off drive inhibit",
             0x4F01: "CANopen unexpected slave state",
             0x5301: "CAN bus Fault",
             0x5302: "CANopen Bootup not received",
@@ -453,33 +555,39 @@
         };
 
         function getLiFePO4Percentage(voltage) {
-            if (!voltage || voltage < 10.0) return 0; 
+            if (!voltage || voltage < 10.0) return 0;
             if (voltage >= 13.4) return 100;
-            if (voltage >= 13.3) return 90; 
-            if (voltage >= 13.2) return 70; 
-            if (voltage >= 13.1) return 40; 
+            if (voltage >= 13.3) return 90;
+            if (voltage >= 13.2) return 70;
+            if (voltage >= 13.1) return 40;
             if (voltage >= 13.0) return 30;
             if (voltage >= 12.9) return 20;
-            if (voltage >= 12.8) return 15; 
+            if (voltage >= 12.8) return 15;
             if (voltage >= 12.5) return 10;
-            if (voltage >= 12.0) return 5;  
+            if (voltage >= 12.0) return 5;
             return 0;
         }
 
         function updateGauge(barId, textId, percent) {
             const bar = document.getElementById(barId);
             const text = document.getElementById(textId);
-            
-            text.innerText = percent + "%";
-            bar.style.width = percent + "%";
-            
-            if(percent <= 20) bar.style.backgroundColor = "var(--accent-red)";
+
+            const safePercent = Math.max(0, Math.min(100, Number(percent) || 0));
+
+            text.innerText = safePercent + "%";
+            bar.style.width = safePercent + "%";
+
+            if (safePercent <= 20) {
+                bar.style.backgroundColor = "var(--accent-red)";
+            } else {
+                bar.style.backgroundColor = "";
+            }
         }
 
-        // --- 차트 생성 (더 모던하고 가시성 높은 설정) ---
         Chart.defaults.color = '#7a7a85';
         Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.06)';
         Chart.defaults.font.family = "'JetBrains Mono', sans-serif";
+
         const maxPoints = 50;
 
         const chartDrive = createChart('chart-drive', ['Speed (km/h)', 'RPM'], ['#2ecc71', '#f39c12'], true);
@@ -488,69 +596,128 @@
         const chartHvStat = createChart('chart-hv-stat', ['Current (A)', 'Temp (°C)'], ['#f1c40f', '#ffffff'], true);
         const chartG = createChart('chart-gforce', ['Lat X', 'Long Y'], ['#3498db', '#888888'], false);
 
-        function createChart(id, labels, colors, dualAxis=false) {
+        function createChart(id, labels, colors, dualAxis = false) {
             return new Chart(document.getElementById(id), {
                 type: 'line',
-                data: { labels: [], datasets: labels.map((l, i) => ({
-                    // ★ 1. 꼼수: 라벨 이름 앞에 강제로 공백(&nbsp; 역할)을 넣어서 동그라미와 무조건 띄워버림
-                    label: '  ' + l, 
-                    data: [], borderColor: colors[i], borderWidth: 2.5, tension: 0.4, pointRadius: 0,
-                    yAxisID: (dualAxis && i===1) ? 'y1' : 'y',
-                    fill: false
-                }))},
+                data: {
+                    labels: [],
+                    datasets: labels.map((label, i) => ({
+                        label: '  ' + label,
+                        data: [],
+                        borderColor: colors[i],
+                        borderWidth: 2.5,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        yAxisID: (dualAxis && i === 1) ? 'y1' : 'y',
+                        fill: false
+                    }))
+                },
                 options: {
-                    responsive: true, maintainAspectRatio: false, animation: false,
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
                     interaction: { mode: 'index', intersect: false },
-                    layout: {
-                        // ★ 2. 차트 전체 위쪽 여백을 조금 줘서 숨통을 트임
-                        padding: { top: 5 }
-                    },
+                    layout: { padding: { top: 5 } },
                     scales: {
                         x: { display: false },
-                        y: { position: 'left', grid: { color: 'rgba(255, 255, 255, 0.04)'}, ticks: { color: '#7a7a85', padding: 10 } },
-                        y1: { display: dualAxis, position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#7a7a85', padding: 10 } }
+                        y: {
+                            position: 'left',
+                            grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                            ticks: { color: '#7a7a85', padding: 10 }
+                        },
+                        y1: {
+                            display: dualAxis,
+                            position: 'right',
+                            grid: { drawOnChartArea: false },
+                            ticks: { color: '#7a7a85', padding: 10 }
+                        }
                     },
-                    plugins: { 
-                        legend: { 
-                            display: true, 
+                    plugins: {
+                        legend: {
+                            display: true,
                             position: 'top',
                             align: 'end',
-                            // ★ 3. 범례와 아래 그래프 선 사이의 간격을 확실하게 벌림
                             padding: { bottom: 20 },
-                            labels: { 
-                                usePointStyle: true, 
-                                pointStyle: 'circle', // 확실한 원형
-                                boxWidth: 7,          // 동그라미 크기
-                                padding: 25           // 각 범례 덩어리(Speed, RPM 등) 사이의 가로 간격
-                            } 
-                        } 
+                            labels: {
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                boxWidth: 7,
+                                padding: 25
+                            }
+                        }
                     }
                 }
             });
         }
 
         const connectionEl = document.getElementById("status-badge");
-        onValue(ref(db, ".info/connected"), (snap) => {
-            if(snap.val()) { connectionEl.innerText = "ONLINE"; connectionEl.classList.add("live"); }
-            else { connectionEl.innerText = "OFFLINE"; connectionEl.classList.remove("live"); }
-        });
+        const loginEmailEl = document.getElementById("login-email");
+        const loginPasswordEl = document.getElementById("login-password");
+        const loginBtnEl = document.getElementById("login-btn");
+        const logoutBtnEl = document.getElementById("logout-btn");
+        const loginMessageEl = document.getElementById("login-message");
 
-        onValue(ref(db, 'telemetry'), (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                updateText('val-speed', data.speed);
-                updateText('val-rpm', data.rpm);
-                updateText('val-torque', data.torque);
+        let unsubscribeTelemetry = null;
+        let unsubscribeConnection = null;
+
+        function setStatus(text, isLive = false) {
+            connectionEl.innerText = text;
+            if (isLive) {
+                connectionEl.classList.add("live");
+            } else {
+                connectionEl.classList.remove("live");
+            }
+        }
+
+        function setLoginMessage(text, type = "") {
+            loginMessageEl.innerText = text;
+            loginMessageEl.className = type;
+        }
+
+        function startConnectionListener() {
+            if (unsubscribeConnection) {
+                unsubscribeConnection();
+            }
+
+            unsubscribeConnection = onValue(ref(db, ".info/connected"), (snap) => {
+                if (snap.val()) {
+                    setStatus("ONLINE", true);
+                } else {
+                    setStatus("OFFLINE", false);
+                }
+            });
+        }
+
+        function startTelemetryListener() {
+            if (unsubscribeTelemetry) {
+                unsubscribeTelemetry();
+            }
+
+            unsubscribeTelemetry = onValue(ref(db, "telemetry/current"), (snapshot) => {
+                const data = snapshot.val();
+
+                if (!data) {
+                    setLoginMessage("로그인은 됐지만 telemetry/current 데이터가 아직 없습니다. ESP32 업로드를 확인하세요.", "error");
+                    return;
+                }
+
+                updateText('val-speed', data.speed ?? 0);
+                updateText('val-rpm', data.rpm ?? 0);
+                updateText('val-torque', data.torque ?? 0);
+
                 updateText('val-hv-volt', fmt(data.hv_volt));
                 updateText('val-hv-curr', fmt(data.hv_curr));
-                updateText('val-hv-temp', data.hv_temp);
+                updateText('val-hv-temp', data.hv_temp ?? 0);
+
                 updateText('val-lv1', fmt(data.lv_volt1));
                 updateText('val-lv2', fmt(data.lv_volt2));
+
                 updateText('val-acc-x', fmt(data.acc_x, 2));
                 updateText('val-acc-y', fmt(data.acc_y, 2));
 
                 const mcFault = data.mc_fault || 0;
                 const faultEl = document.getElementById('val-mc-fault');
+
                 if (faultEl) {
                     if (mcFault === 0) {
                         faultEl.innerText = "OK";
@@ -565,30 +732,117 @@
                     }
                 }
 
-                updateGauge('soc-hv-bar', 'soc-hv-text', data.hv_soc || 0); 
-                const lv1_pct = getLiFePO4Percentage(data.lv_volt1); 
-                const lv2_pct = getLiFePO4Percentage(data.lv_volt2); 
+                updateGauge('soc-hv-bar', 'soc-hv-text', data.soc || 0);
+
+                const lv1_pct = getLiFePO4Percentage(data.lv_volt1);
+                const lv2_pct = getLiFePO4Percentage(data.lv_volt2);
+
                 updateGauge('soc-lv1-bar', 'soc-lv1-text', lv1_pct);
                 updateGauge('soc-lv2-bar', 'soc-lv2-text', lv2_pct);
 
                 const now = new Date().toLocaleTimeString();
-                pushData(chartDrive, now, [data.speed||0, data.rpm||0]);
-                pushData(chartLv, now, [data.lv_volt1||0, data.lv_volt2||0]);
-                pushData(chartHvVolt, now, [data.hv_volt||0]);
-                pushData(chartHvStat, now, [data.hv_curr||0, data.hv_temp||0]);
-                pushData(chartG, now, [data.acc_x||0, data.acc_y||0]);
+
+                pushData(chartDrive, now, [data.speed || 0, data.rpm || 0]);
+                pushData(chartLv, now, [data.lv_volt1 || 0, data.lv_volt2 || 0]);
+                pushData(chartHvVolt, now, [data.hv_volt || 0]);
+                pushData(chartHvStat, now, [data.hv_curr || 0, data.hv_temp || 0]);
+                pushData(chartG, now, [data.acc_x || 0, data.acc_y || 0]);
+            }, (error) => {
+                setStatus("DB DENIED", false);
+                setLoginMessage("DB 읽기 실패: 권한 또는 Rules를 확인하세요. " + error.message, "error");
+            });
+        }
+
+        async function loginViewer() {
+            const email = loginEmailEl.value.trim();
+            const password = loginPasswordEl.value;
+
+            if (!email || !password) {
+                setLoginMessage("이메일과 비밀번호를 입력하세요.", "error");
+                return;
+            }
+
+            loginBtnEl.disabled = true;
+            setLoginMessage("로그인 중...", "");
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (err) {
+                setStatus("LOGIN FAIL", false);
+                setLoginMessage("로그인 실패: " + err.message, "error");
+            } finally {
+                loginBtnEl.disabled = false;
+            }
+        }
+
+        loginBtnEl.addEventListener("click", loginViewer);
+
+        loginPasswordEl.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                loginViewer();
             }
         });
 
-        function updateText(id, val) { const el = document.getElementById(id); if(el) el.innerText = val; }
-        function fmt(val, d=1) { return val ? val.toFixed(d) : 0; }
+        logoutBtnEl.addEventListener("click", () => {
+            signOut(auth);
+        });
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                setLoginMessage(`로그인됨: ${user.email}`, "ok");
+
+                loginEmailEl.style.display = "none";
+                loginPasswordEl.style.display = "none";
+                loginBtnEl.style.display = "none";
+                logoutBtnEl.style.display = "block";
+
+                startConnectionListener();
+                startTelemetryListener();
+            } else {
+                if (unsubscribeTelemetry) {
+                    unsubscribeTelemetry();
+                    unsubscribeTelemetry = null;
+                }
+
+                if (unsubscribeConnection) {
+                    unsubscribeConnection();
+                    unsubscribeConnection = null;
+                }
+
+                setStatus("LOGIN REQUIRED", false);
+                setLoginMessage("로그인 후 텔레메트리를 읽습니다.", "");
+
+                loginEmailEl.style.display = "block";
+                loginPasswordEl.style.display = "block";
+                loginBtnEl.style.display = "block";
+                logoutBtnEl.style.display = "none";
+            }
+        });
+
+        function updateText(id, val) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.innerText = val;
+            }
+        }
+
+        function fmt(val, d = 1) {
+            const num = Number(val);
+            return Number.isFinite(num) ? num.toFixed(d) : "0";
+        }
+
         function pushData(chart, label, values) {
             chart.data.labels.push(label);
-            values.forEach((val, idx) => chart.data.datasets[idx].data.push(val));
-            if(chart.data.labels.length > maxPoints) {
+
+            values.forEach((val, idx) => {
+                chart.data.datasets[idx].data.push(Number(val) || 0);
+            });
+
+            if (chart.data.labels.length > maxPoints) {
                 chart.data.labels.shift();
                 chart.data.datasets.forEach(ds => ds.data.shift());
             }
+
             chart.update();
         }
     </script>
