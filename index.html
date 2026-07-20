@@ -6,6 +6,8 @@
     <title>EOULSURE TELEMETRY v5.6 - SECURE</title>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&display=swap" rel="stylesheet">
 
     <style>
@@ -304,6 +306,20 @@
         #login-message.ok {
             color: var(--accent-green);
         }
+
+        button { width:100%; padding:10px; margin-top:8px; border:0; border-radius:8px; color:white; background:var(--accent-blue); cursor:pointer; font-family:inherit; font-weight:700; }
+        button.secondary { background:#343842; }
+        button.danger { background:var(--accent-red); }
+        button:disabled { opacity:0.45; cursor:not-allowed; }
+        .status-line { margin-top:8px; font-size:0.75rem; color:var(--text-dim); overflow-wrap:anywhere; }
+        .map-card { background:var(--panel-bg); border:var(--border-highlight); border-radius:20px; padding:20px; box-shadow:var(--shadow-panel); }
+        #track-map { width:100%; height:430px; border-radius:14px; background:#08090b; }
+        .lap-grid { display:grid; grid-template-columns:repeat(4,minmax(120px,1fr)); gap:12px; margin-bottom:15px; }
+        .lap-stat { border:var(--border-primary); border-radius:10px; padding:12px; background:rgba(255,255,255,0.025); }
+        .lap-stat span { display:block; }
+        .lap-stat .label { color:var(--text-dim); font-size:0.7rem; }
+        .lap-stat .value { margin-top:5px; font-size:1.1rem; font-weight:700; }
+        @media (max-width:900px) { body{display:block;height:auto;overflow:auto} aside{width:100%;height:auto} main{padding:18px} .lap-grid{grid-template-columns:repeat(2,1fr)} #track-map{height:360px} }
     </style>
 </head>
 
@@ -318,6 +334,17 @@
             <button id="login-btn" type="button">LOGIN</button>
             <button id="logout-btn" class="secondary" type="button" style="display:none;">LOGOUT</button>
             <div id="login-message">로그인 후 텔레메트리를 읽습니다.</div>
+        </div>
+
+        <div class="data-group">
+            <div class="group-title">Location & Session</div>
+            <button id="location-start-btn" type="button" disabled>위치 전송 시작</button>
+            <button id="location-stop-btn" class="secondary" type="button" disabled>위치 전송 정지</button>
+            <button id="session-start-btn" type="button" disabled>세션 기록 시작</button>
+            <button id="session-stop-btn" class="danger" type="button" disabled>세션 기록 종료</button>
+            <button id="start-line-btn" class="secondary" type="button">스타트 라인 설정</button>
+            <div id="location-status" class="status-line">GPS: 대기 중</div>
+            <div id="session-status" class="status-line">SESSION: STOPPED</div>
         </div>
 
         <div class="data-group">
@@ -338,7 +365,6 @@
         <div class="data-group">
             <div class="group-title">HV System</div>
             <div class="data-row"><span class="data-label">Volt</span> <div><span id="val-hv-volt" class="data-val" style="color:var(--accent-red)">0.0</span><span class="unit">V</span></div></div>
-            <div class="data-row"><span class="data-label">Curr</span> <div><span id="val-hv-curr" class="data-val" style="color:var(--accent-yellow)">0.0</span><span class="unit">A</span></div></div>
             <div class="data-row"><span class="data-label">Temp</span> <div><span id="val-hv-temp" class="data-val">0</span><span class="unit">°C</span></div></div>
         </div>
 
@@ -360,6 +386,16 @@
     </aside>
 
     <main>
+        <div class="map-card">
+            <div class="lap-grid">
+                <div class="lap-stat"><span class="label">CURRENT LAP</span><span id="lap-current" class="value">--:--.---</span></div>
+                <div class="lap-stat"><span class="label">LAST LAP</span><span id="lap-last" class="value">--:--.---</span></div>
+                <div class="lap-stat"><span class="label">BEST LAP</span><span id="lap-best" class="value">--:--.---</span></div>
+                <div class="lap-stat"><span class="label">GPS / SYNC</span><span id="gps-quality" class="value">NO FIX</span></div>
+            </div>
+            <div id="track-map"></div>
+            <div class="status-line">‘스타트 라인 설정’을 누른 뒤 지도에서 두 점을 선택하세요.</div>
+        </div>
         <div class="gauge-container">
             <div class="battery-wrapper">
                 <div class="battery-info">
@@ -409,7 +445,7 @@
             </div>
 
             <div class="chart-card">
-                <div class="chart-title">HV CURRENT & TEMP</div>
+                <div class="chart-title">HV TEMPERATURE</div>
                 <div class="canvas-container"><canvas id="chart-hv-stat"></canvas></div>
             </div>
 
@@ -422,7 +458,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, onValue, set, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
@@ -593,7 +629,7 @@
         const chartDrive = createChart('chart-drive', ['Speed (km/h)', 'RPM'], ['#2ecc71', '#f39c12'], true);
         const chartLv = createChart('chart-lv', ['LV1 (V)', 'LV2 (V)'], ['#3498db', '#9b59b6'], false);
         const chartHvVolt = createChart('chart-hv-volt', ['HV Volt (V)'], ['#e74c3c'], false);
-        const chartHvStat = createChart('chart-hv-stat', ['Current (A)', 'Temp (°C)'], ['#f1c40f', '#ffffff'], true);
+        const chartHvStat = createChart('chart-hv-stat', ['Temp (°C)'], ['#ffffff'], false);
         const chartG = createChart('chart-gforce', ['Lat X', 'Long Y'], ['#3498db', '#888888'], false);
 
         function createChart(id, labels, colors, dualAxis = false) {
@@ -659,6 +695,234 @@
 
         let unsubscribeTelemetry = null;
         let unsubscribeConnection = null;
+        let locationWatchId = null;
+        let locationSequence = 0;
+        let activeSessionId = null;
+        let previousPosition = null;
+        let latestTelemetryTimestamp = 0;
+        let lapStartTimestamp = null;
+        let lastCrossingTimestamp = 0;
+        let lapNumber = 0;
+        let bestLapMs = null;
+        let startLinePoints = [];
+        let settingStartLine = false;
+
+        const locationStartBtn = document.getElementById('location-start-btn');
+        const locationStopBtn = document.getElementById('location-stop-btn');
+        const sessionStartBtn = document.getElementById('session-start-btn');
+        const sessionStopBtn = document.getElementById('session-stop-btn');
+        const startLineBtn = document.getElementById('start-line-btn');
+        const locationStatusEl = document.getElementById('location-status');
+        const sessionStatusEl = document.getElementById('session-status');
+
+        const map = L.map('track-map').setView([37.5665, 126.9780], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 20,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        let vehicleMarker = null;
+        let accuracyCircle = null;
+        let routePolyline = L.polyline([], { color: '#2ecc71', weight: 3 }).addTo(map);
+        let startLineLayer = null;
+
+        function loadStartLine() {
+            try {
+                const saved = JSON.parse(localStorage.getItem('eoulsureStartLine') || 'null');
+                if (Array.isArray(saved) && saved.length === 2) {
+                    startLinePoints = saved;
+                    drawStartLine();
+                }
+            } catch (_) {}
+        }
+
+        function drawStartLine() {
+            if (startLineLayer) map.removeLayer(startLineLayer);
+            if (startLinePoints.length === 2) {
+                startLineLayer = L.polyline(startLinePoints, { color: '#e74c3c', weight: 5 }).addTo(map);
+            }
+        }
+
+        map.on('click', (event) => {
+            if (!settingStartLine) return;
+            startLinePoints.push([event.latlng.lat, event.latlng.lng]);
+            if (startLinePoints.length === 2) {
+                settingStartLine = false;
+                localStorage.setItem('eoulsureStartLine', JSON.stringify(startLinePoints));
+                drawStartLine();
+                startLineBtn.textContent = '스타트 라인 재설정';
+            }
+        });
+
+        startLineBtn.addEventListener('click', () => {
+            startLinePoints = [];
+            settingStartLine = true;
+            if (startLineLayer) {
+                map.removeLayer(startLineLayer);
+                startLineLayer = null;
+            }
+            startLineBtn.textContent = '지도에서 두 점을 선택하세요';
+        });
+
+        function segmentIntersectionRatio(a, b, c, d) {
+            const r = { x: b[1] - a[1], y: b[0] - a[0] };
+            const s = { x: d[1] - c[1], y: d[0] - c[0] };
+            const denominator = r.x * s.y - r.y * s.x;
+            if (Math.abs(denominator) < 1e-12) return null;
+            const q = { x: c[1] - a[1], y: c[0] - a[0] };
+            const t = (q.x * s.y - q.y * s.x) / denominator;
+            const u = (q.x * r.y - q.y * r.x) / denominator;
+            return t >= 0 && t <= 1 && u >= 0 && u <= 1 ? t : null;
+        }
+
+        function formatLap(ms) {
+            if (!Number.isFinite(ms) || ms < 0) return '--:--.---';
+            const minutes = Math.floor(ms / 60000);
+            const seconds = Math.floor((ms % 60000) / 1000);
+            const millis = Math.floor(ms % 1000);
+            return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(millis).padStart(3, '0')}`;
+        }
+
+        async function processLapCrossing(previous, current) {
+            if (!activeSessionId || startLinePoints.length !== 2 || !previous) return;
+            const ratio = segmentIntersectionRatio(
+                [previous.lat, previous.lon], [current.lat, current.lon],
+                startLinePoints[0], startLinePoints[1]
+            );
+            if (ratio === null) return;
+            const crossingTs = Math.round(previous.ts + (current.ts - previous.ts) * ratio);
+            if (crossingTs - lastCrossingTimestamp < 20000) return;
+            lastCrossingTimestamp = crossingTs;
+
+            if (lapStartTimestamp !== null) {
+                const lapTimeMs = crossingTs - lapStartTimestamp;
+                lapNumber += 1;
+                bestLapMs = bestLapMs === null ? lapTimeMs : Math.min(bestLapMs, lapTimeMs);
+                updateText('lap-last', formatLap(lapTimeMs));
+                updateText('lap-best', formatLap(bestLapMs));
+                await set(ref(db, `sessions/${activeSessionId}/laps/${lapNumber}`), {
+                    lap_number: lapNumber,
+                    start_timestamp_ms: lapStartTimestamp,
+                    end_timestamp_ms: crossingTs,
+                    lap_time_ms: lapTimeMs,
+                    valid: true,
+                    server_timestamp_ms: serverTimestamp()
+                });
+            }
+            lapStartTimestamp = crossingTs;
+        }
+
+        async function uploadPosition(position) {
+            const c = position.coords;
+            const locationData = {
+                sequence: ++locationSequence,
+                measurement_timestamp_ms: Math.round(position.timestamp),
+                server_timestamp_ms: serverTimestamp(),
+                valid: c.accuracy >= 0 && c.accuracy <= 20,
+                lat: c.latitude,
+                lon: c.longitude,
+                accuracy_m: c.accuracy,
+                speed_mps: Number.isFinite(c.speed) ? c.speed : null,
+                heading_deg: Number.isFinite(c.heading) ? c.heading : null
+            };
+
+            await set(ref(db, 'location/current'), locationData);
+            if (activeSessionId) {
+                await set(push(ref(db, `sessions/${activeSessionId}/location`)), locationData);
+            }
+
+            const latLng = [c.latitude, c.longitude];
+            if (!vehicleMarker) {
+                vehicleMarker = L.marker(latLng).addTo(map);
+                map.setView(latLng, 18);
+            } else {
+                vehicleMarker.setLatLng(latLng);
+            }
+            if (!accuracyCircle) {
+                accuracyCircle = L.circle(latLng, { radius: c.accuracy, color: '#3498db', fillOpacity: 0.08 }).addTo(map);
+            } else {
+                accuracyCircle.setLatLng(latLng).setRadius(c.accuracy);
+            }
+            routePolyline.addLatLng(latLng);
+
+            const current = { lat: c.latitude, lon: c.longitude, ts: position.timestamp };
+            await processLapCrossing(previousPosition, current);
+            previousPosition = current;
+
+            const syncDelta = latestTelemetryTimestamp
+                ? Math.abs(position.timestamp - latestTelemetryTimestamp)
+                : null;
+            locationStatusEl.textContent = `GPS: ${c.accuracy.toFixed(1)}m / ${new Date(position.timestamp).toLocaleTimeString()}`;
+            updateText('gps-quality', syncDelta === null ? `${c.accuracy.toFixed(1)}m` : `${c.accuracy.toFixed(1)}m / Δ${Math.round(syncDelta)}ms`);
+        }
+
+        function startLocation() {
+            if (!navigator.geolocation || locationWatchId !== null) return;
+            locationStatusEl.textContent = 'GPS 권한 요청 중...';
+            locationWatchId = navigator.geolocation.watchPosition(
+                position => uploadPosition(position).catch(error => {
+                    locationStatusEl.textContent = `GPS Firebase 오류: ${error.message}`;
+                }),
+                error => { locationStatusEl.textContent = `GPS 오류: ${error.message}`; },
+                { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+            );
+            locationStartBtn.disabled = true;
+            locationStopBtn.disabled = false;
+        }
+
+        async function stopLocation() {
+            if (locationWatchId !== null) {
+                navigator.geolocation.clearWatch(locationWatchId);
+                locationWatchId = null;
+            }
+            locationStartBtn.disabled = false;
+            locationStopBtn.disabled = true;
+            locationStatusEl.textContent = 'GPS: 정지됨';
+            try {
+                await set(ref(db, 'location/current/valid'), false);
+            } catch (_) {}
+        }
+
+        async function startSession() {
+            activeSessionId = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
+            lapStartTimestamp = null;
+            lastCrossingTimestamp = 0;
+            lapNumber = 0;
+            bestLapMs = null;
+            routePolyline.setLatLngs([]);
+            await set(ref(db, `sessions/${activeSessionId}/meta`), {
+                active: true,
+                started_at: serverTimestamp(),
+                created_by: auth.currentUser?.uid || null,
+                start_line: startLinePoints.length === 2 ? { a: startLinePoints[0], b: startLinePoints[1] } : null
+            });
+            await set(ref(db, 'control/active_session'), {
+                active: true,
+                id: activeSessionId,
+                started_at: serverTimestamp()
+            });
+            sessionStatusEl.textContent = `SESSION: ${activeSessionId}`;
+            sessionStartBtn.disabled = true;
+            sessionStopBtn.disabled = false;
+        }
+
+        async function stopSession() {
+            if (!activeSessionId) return;
+            const endedSessionId = activeSessionId;
+            activeSessionId = null;
+            await set(ref(db, `sessions/${endedSessionId}/meta/active`), false);
+            await set(ref(db, `sessions/${endedSessionId}/meta/ended_at`), serverTimestamp());
+            await set(ref(db, 'control/active_session'), { active: false, id: '', ended_at: serverTimestamp() });
+            sessionStatusEl.textContent = 'SESSION: STOPPED';
+            sessionStartBtn.disabled = false;
+            sessionStopBtn.disabled = true;
+        }
+
+        locationStartBtn.addEventListener('click', startLocation);
+        locationStopBtn.addEventListener('click', stopLocation);
+        sessionStartBtn.addEventListener('click', () => startSession().catch(error => sessionStatusEl.textContent = `SESSION ERROR: ${error.message}`));
+        sessionStopBtn.addEventListener('click', () => stopSession().catch(error => sessionStatusEl.textContent = `SESSION ERROR: ${error.message}`));
+        loadStartLine();
 
         function setStatus(text, isLive = false) {
             connectionEl.innerText = text;
@@ -701,12 +965,18 @@
                     return;
                 }
 
+                latestTelemetryTimestamp = Number(data.measurement_timestamp_ms) || Date.now();
+                if (activeSessionId) {
+                    const sessionSample = { ...data, web_received_timestamp_ms: Date.now() };
+                    set(push(ref(db, `sessions/${activeSessionId}/telemetry`)), sessionSample)
+                        .catch(error => sessionStatusEl.textContent = `TELEMETRY SAVE ERROR: ${error.message}`);
+                }
+
                 updateText('val-speed', data.speed ?? 0);
                 updateText('val-rpm', data.rpm ?? 0);
                 updateText('val-torque', data.torque ?? 0);
 
                 updateText('val-hv-volt', fmt(data.hv_volt));
-                updateText('val-hv-curr', fmt(data.hv_curr));
                 updateText('val-hv-temp', data.hv_temp ?? 0);
 
                 updateText('val-lv1', fmt(data.lv_volt1));
@@ -740,12 +1010,13 @@
                 updateGauge('soc-lv1-bar', 'soc-lv1-text', lv1_pct);
                 updateGauge('soc-lv2-bar', 'soc-lv2-text', lv2_pct);
 
-                const now = new Date().toLocaleTimeString();
+                const sampleTime = Number(data.measurement_timestamp_ms) || Date.now();
+                const now = new Date(sampleTime).toLocaleTimeString();
 
                 pushData(chartDrive, now, [data.speed || 0, data.rpm || 0]);
                 pushData(chartLv, now, [data.lv_volt1 || 0, data.lv_volt2 || 0]);
                 pushData(chartHvVolt, now, [data.hv_volt || 0]);
-                pushData(chartHvStat, now, [data.hv_curr || 0, data.hv_temp || 0]);
+                pushData(chartHvStat, now, [data.hv_temp || 0]);
                 pushData(chartG, now, [data.acc_x || 0, data.acc_y || 0]);
             }, (error) => {
                 setStatus("DB DENIED", false);
@@ -798,6 +1069,8 @@
 
                 startConnectionListener();
                 startTelemetryListener();
+                locationStartBtn.disabled = false;
+                sessionStartBtn.disabled = false;
             } else {
                 if (unsubscribeTelemetry) {
                     unsubscribeTelemetry();
@@ -816,8 +1089,21 @@
                 loginPasswordEl.style.display = "block";
                 loginBtnEl.style.display = "block";
                 logoutBtnEl.style.display = "none";
+                if (locationWatchId !== null) navigator.geolocation.clearWatch(locationWatchId);
+                locationWatchId = null;
+                activeSessionId = null;
+                locationStartBtn.disabled = true;
+                locationStopBtn.disabled = true;
+                sessionStartBtn.disabled = true;
+                sessionStopBtn.disabled = true;
             }
         });
+
+        setInterval(() => {
+            if (lapStartTimestamp !== null && activeSessionId) {
+                updateText('lap-current', formatLap(Date.now() - lapStartTimestamp));
+            }
+        }, 50);
 
         function updateText(id, val) {
             const el = document.getElementById(id);
